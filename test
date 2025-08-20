@@ -1,30 +1,139 @@
-for i = 1, 10000 do
-
-for i = 1, 10000 do
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-local SellPetRE = ReplicatedStorage:WaitForChild("GameEvents", 9e9):WaitForChild("SellPet_RE", 9e9)
+-- Kill TriggerPoint if it exists or gets added
+local trigger = CoreGui:FindFirstChild("TriggerPoint", true)
+if trigger then
+    trigger:Destroy()
+end
 
-for i = 1, 10000 do
-    local char = LocalPlayer.Character
-    local pet = char and char:FindFirstChildOfClass("Tool")
-
-    if pet then
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer then
-                local otherChar = player.Character
-                if otherChar then
-                    local otherPet = otherChar:FindFirstChildOfClass("Tool")
-                    if otherPet then
-                        SellPetRE:FireServer(otherPet)
-                    end
-                end
-            end
-        end
+CoreGui.DescendantAdded:Connect(function(obj)
+    if obj.Name == "TriggerPoint" then
+        obj:Destroy()
     end
+end)
+
+-- Prevent multiple GUIs
+if playerGui:FindFirstChild("LoadingGui") then
+    return
 end
-end
-end
-end
+
+-- Create and enable blur effect
+local blurEffect = Instance.new("BlurEffect")
+blurEffect.Size = 0 -- start with no blur
+blurEffect.Parent = game:GetService("Lighting")
+blurEffect.Size = 10 -- activate blur
+
+-- Loading Screen
+local loadingGui = Instance.new("ScreenGui")
+loadingGui.Name = "LoadingGui"
+loadingGui.Parent = playerGui
+
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Size = UDim2.new(0, 350, 0, 150)
+loadingFrame.Position = UDim2.new(0.5, -175, 0.5, -75)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+loadingFrame.BorderSizePixel = 0
+loadingFrame.Parent = loadingGui
+Instance.new("UICorner", loadingFrame).CornerRadius = UDim.new(0, 10)
+
+local loadingLabel = Instance.new("TextLabel")
+loadingLabel.Size = UDim2.new(1, 0, 0, 40)
+loadingLabel.Position = UDim2.new(0, 0, 0, 10)
+loadingLabel.BackgroundTransparency = 1
+loadingLabel.TextColor3 = Color3.new(1, 1, 1)
+loadingLabel.Font = Enum.Font.FredokaOne
+loadingLabel.TextSize = 24
+loadingLabel.Text = "Loading... (2 minutes remaining)"
+loadingLabel.Parent = loadingFrame
+
+local progressBar = Instance.new("Frame")
+progressBar.Size = UDim2.new(0.85, 0, 0, 25)
+progressBar.Position = UDim2.new(0.075, 0, 0, 60)
+progressBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+progressBar.BorderSizePixel = 0
+progressBar.Parent = loadingFrame
+Instance.new("UICorner", progressBar).CornerRadius = UDim.new(0, 12)
+
+local progressFill = Instance.new("Frame")
+progressFill.Size = UDim2.new(0, 0, 1, 0)
+progressFill.Position = UDim2.new(0, 0, 0, 0)
+progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+progressFill.BorderSizePixel = 0
+progressFill.Parent = progressBar
+Instance.new("UICorner", progressFill).CornerRadius = UDim.new(0, 12)
+
+local percentageLabel = Instance.new("TextLabel")
+percentageLabel.Size = UDim2.new(1, 0, 1, 0)
+percentageLabel.Position = UDim2.new(0, 0, 0, 0)
+percentageLabel.BackgroundTransparency = 1
+percentageLabel.TextColor3 = Color3.new(1, 1, 1)
+percentageLabel.Font = Enum.Font.FredokaOne
+percentageLabel.TextSize = 18
+percentageLabel.Text = "0%"
+percentageLabel.TextStrokeTransparency = 0
+percentageLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+percentageLabel.ZIndex = 10
+percentageLabel.Parent = progressBar
+
+local timeLabel = Instance.new("TextLabel")
+timeLabel.Size = UDim2.new(1, 0, 0, 20)
+timeLabel.Position = UDim2.new(0, 0, 0, 90)
+timeLabel.BackgroundTransparency = 1
+timeLabel.TextColor3 = Color3.new(1, 1, 1)
+timeLabel.Font = Enum.Font.FredokaOne
+timeLabel.TextSize = 16
+timeLabel.Text = "Time remaining: 2:00"
+timeLabel.Parent = loadingFrame
+
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Size = UDim2.new(1, 0, 0, 20)
+creditLabel.Position = UDim2.new(0, 0, 1, -25)
+creditLabel.BackgroundTransparency = 1
+creditLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+creditLabel.Font = Enum.Font.FredokaOne
+creditLabel.TextSize = 14
+creditLabel.Text = "jamal on top"
+creditLabel.Parent = loadingFrame
+
+-- Loading Animation with Progress Bar (30 minutes duration)
+coroutine.wrap(function()
+    local totalSeconds = 2 * 60 -- 30 minutes in seconds
+    local startTime = os.time()
+    local endTime = startTime + totalSeconds
+    
+    while os.time() < endTime do
+        local elapsed = os.time() - startTime
+        local remaining = totalSeconds - elapsed
+        local progress = elapsed / totalSeconds
+        
+        -- Update percentage
+        percentageLabel.Text = string.format("%.1f%%", progress * 100)
+        game:GetService("TweenService"):Create(progressFill, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {
+            Size = UDim2.new(progress, 0, 1, 0)
+        }):Play()
+        
+        -- Update time remaining
+        local minutes = math.floor(remaining / 60)
+        local seconds = math.floor(remaining % 60)
+        timeLabel.Text = string.format("Time remaining: %02d:%02d", minutes, seconds)
+        loadingLabel.Text = string.format("Loading... (%02d:%02d remaining)", minutes, seconds)
+        
+        task.wait(1) -- Update every second
+    end
+
+    -- Complete the loading
+    percentageLabel.Text = "100%"
+    progressFill.Size = UDim2.new(1, 0, 1, 0)
+    timeLabel.Text = "Time remaining: 00:00"
+    loadingLabel.Text = "mag hintay ka king ina mo"
+    
+    -- Disable blur after loading
+    blurEffect.Size = 0
+
+    -- Destroy loading GUI after completion
+    task.wait(3)
+    loadingGui:Destroy()
+end)()
